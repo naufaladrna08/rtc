@@ -9,6 +9,21 @@ class camera {
     int imageWidth = 0;
     int samplePerPixel = 1;
     int* progress;
+
+    // Vertical field of view
+    double vfov = 90;
+
+    // Point of camera is looking from
+    point3 lookFrom = point3(0.0f, 0.0f, 0.0f);
+    // Point of camera is looking to
+    point3 lookAt = point3(0.0f, 0.0f, -1.0f);
+    // Camera-relative "up" direction
+    vec3 vup = vec3(0.0f, 1.0f, 0.0f);
+
+    // Variation angle of rays through each pixel
+    double defocusAngle = 0;
+    // Distance from camera lookFrom point to plane of perfect focus
+    double focusDist = 10;
     
     /*
      * Maximum number of ray bounces into scene
@@ -91,8 +106,16 @@ class camera {
     vec3 m_pixelDeltaU;
     vec3 m_pixelDeltaV;
     double m_pixelSampleScale;
+    
+    // Camera frame basis vectors
+    vec3 m_u, m_v, m_w; 
+
+    vec3 m_defocusDiskU;
+    vec3 m_defocusDiskV;
 
     void initialize() {
+      m_center = lookFrom;
+
       /*
        * Calculating the image height
        *
@@ -111,22 +134,34 @@ class camera {
        * viewport will bound the rendered image.
        */
       double viewportHeight = 2.0f; // arbitary viewport height 
+
+      // double focalLength = (lookFrom - lookAt).length(); // The distance between eye and viewport
+      auto tetha = ddegtorad(vfov);
+      auto h = std::tan(tetha / 2);
+      viewportHeight = 2 * h * focusDist;
       double viewportWidth = viewportHeight * (double(imageWidth) / m_imageHeight);
 
-      double focal_length = 1.0f; // The distance between eye and viewport
-      m_center = point3(0.0f, 0.0f, 0.0f);
+      // Calculate the u, v, w unit basis vectors for the camera coordinate frame
+      m_w = unit_vector(lookFrom - lookAt);
+      m_u = unit_vector(cross(vup, m_w));
+      m_v = cross(m_w, m_u);
 
       // right and up direction
-      auto viewportU = vec3(viewportWidth, 0.0f, 0.0f); 
-      auto viewportV = vec3(0.0f, -viewportHeight, 0.0f);
+      auto viewportU = viewportWidth * m_u;
+      auto viewportV = viewportHeight * -m_v;
     
       m_pixelDeltaU = viewportU / imageWidth;
       m_pixelDeltaV = viewportV / m_imageHeight;
 
       // center - direction to the viewport - half of viewport size
-      auto viewport_upper_left = m_center - vec3(0, 0, focal_length) - viewportU / 2
+      auto viewport_upper_left = m_center - (focusDist * m_w) - viewportU / 2
         - viewportV / 2;
-        m_pixel00Location = viewport_upper_left + 0.5f * (m_pixelDeltaU + m_pixelDeltaV);
+      m_pixel00Location = viewport_upper_left + 0.5f * (m_pixelDeltaU + m_pixelDeltaV);
+
+      // Calculate the camera defocus disk basis vectors
+      auto defocusRadius = focusDist * std::tan(ddegtorad(defocusAngle / 2));
+      m_defocusDiskU = m_u * defocusRadius;
+      m_defocusDiskV = m_v * defocusRadius;
 
       m_pixelSampleScale = 1.0f / samplePerPixel;
     }
@@ -137,10 +172,15 @@ class camera {
         + ((i + offset.x()) * m_pixelDeltaU)
         + ((j + offset.y()) * m_pixelDeltaV);
 
-      auto rayOrigin = m_center;
+      auto rayOrigin = (defocusAngle <= 0) ? m_center : defocus_disk_sample();
       auto rayDirection = pixelSample - rayOrigin;
       
       return ray(rayOrigin, rayDirection);
+    }
+
+    point3 defocus_disk_sample() const {
+      auto p = random_in_unit_disk();
+      return m_center + (p[0] * m_defocusDiskU) + (p[1] * m_defocusDiskV);
     }
 
     vec3 sampleSquare() const {

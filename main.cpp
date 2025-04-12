@@ -14,6 +14,9 @@
 #include "material.h"
 #include "external/glad/gl.h"
 #include <GLFW/glfw3.h>
+#define GLFW_EXPOSE_NATIVE_X11
+#define GLFW_EXPOSE_NATIVE_GLX
+#include <GLFW/glfw3native.h>
 #include <stdexcept>
 #include <cstdlib>
 
@@ -45,6 +48,7 @@ class application {
       glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
       glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
       glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+      glfwWindowHint(GLFW_MAXIMIZED, GL_TRUE);
 
       if (!glfwInit()) {
         throw new std::runtime_error("GLFW is required but you're device seem's to unsupport \
@@ -56,6 +60,7 @@ class application {
         throw new std::runtime_error("Honestly, fuck yourself");
       }
 
+      glfwMaximizeWindow(m_window);
       glfwMakeContextCurrent(m_window);
       glfwSwapInterval(1);
 
@@ -107,13 +112,28 @@ class application {
         m_camera->aspectRatio = 4.0f / 3.0f;
         m_camera->imageWidth = 800;
         m_camera->maxDepth = 50;
+        m_camera->vfov = 20;
+        m_camera->lookFrom = point3(-2,2,1);
+        m_camera->lookAt   = point3(0,0,-1);
+        m_camera->vup      = vec3(0,1,0);
 
         m_renderBuffer.resize(m_textureWidth * m_textureHeight * 3);
         
-        m_world->add(std::make_shared<sphere>(point3(0,-100.5,-1), 100, material_ground));
+        m_world->add(std::make_shared<sphere>(point3(0.0f, -100.5f, -1), 100, material_ground));
+        // m_world->add(std::make_shared<sphere>(point3(0.0f,  0.0f,   -1), 0.5, material_center));
+        // m_world->add(std::make_shared<sphere>(point3(1.2f,  0.0f,   -1), 0.5, material_dielectric));
+        // m_world->add(std::make_shared<sphere>(point3(1.2f,  0.0f,   -1), 0.4, material_bubble));
+        // m_world->add(std::make_shared<sphere>(point3(-1.2f,  0.0f,  -1), 0.5, material_dielectric));
+
+        auto R = std::cos(pi / 4);
+
+        m_world->add(std::make_shared<sphere>(point3(-R, 0.0f, -1.0f), R, material_center));
+        m_world->add(std::make_shared<sphere>(point3( R, 0.0f, -1.0f), 0.5, material_center));
 
         while (true) {
           m_camera->samplePerPixel = m_samples;
+          m_camera->defocusAngle = m_defocusAngle;
+          m_camera->focusDist = m_focusDist;
 
           if (shouldRender) {
             std::lock_guard<std::mutex> lock(renderMutex);
@@ -195,6 +215,8 @@ class application {
 
           ImGui::Text("Render Settings");
           ImGui::InputInt("Samples", &m_samples);
+          ImGui::InputDouble("Focus Distance", &m_focusDist);
+          ImGui::InputDouble("Defocus Angle", &m_defocusAngle);
           
           float progress = (float) m_progressBar / (m_textureHeight * m_textureWidth);
           ImGui::ProgressBar(progress, ImVec2(windowSize.x - 16, 32.0f));
@@ -220,7 +242,7 @@ class application {
 
   private:
     GLFWwindow* m_window = nullptr;
-    bool m_showDemoWindow = false;
+    bool m_showDemoWindow = true;
     GLuint m_renderTexture = 0;
     int m_textureWidth = 800;
     int m_textureHeight = 600;
@@ -229,6 +251,8 @@ class application {
     camera* m_camera;
     int m_progressBar = 0;
     int m_samples = 16;
+    double m_defocusAngle = 10.0f;
+    double m_focusDist = 3.4f;
 
     typedef struct {
       std::string name;
@@ -242,6 +266,8 @@ class application {
     std::shared_ptr<material> material_center = std::make_shared<lambertian>(color(0.1, 0.2, 0.5));
     std::shared_ptr<material> material_left   = std::make_shared<metal>(color(0.8, 0.8, 0.8), 0.3f);
     std::shared_ptr<material> material_right  = std::make_shared<metal>(color(0.8, 0.6, 0.2), 1.0f);
+    std::shared_ptr<material> material_dielectric = std::make_shared<dielectric>(1.50f);
+    std::shared_ptr<material> material_bubble = std::make_shared<dielectric>(1.00f / 1.50f);
   };
 
 int main(int argc, char const *argv[]) {

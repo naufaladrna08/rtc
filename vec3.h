@@ -131,4 +131,18 @@ inline vec3 reflect(const vec3& v, const vec3& n) {
   return v - 2 * dot(v, n) * n;
 }
 
+inline vec3 refract(const vec3& uv, const vec3& n, double etai_over_etat) {
+  auto cos_tetha = std::fmin(dot(-uv, n), 1.0f);
+  vec3 r_out_perp = etai_over_etat * (uv + cos_tetha * n);
+  vec3 r_out_parallel = -std::sqrt(std::fabs(1.0f - r_out_perp.length_squared())) * n;
+  return r_out_perp + r_out_parallel;
+}
+
+inline vec3 random_in_unit_disk() {
+  while (true) {
+    auto p = vec3(drandom(-1, 1), drandom(-1, 1), 0.0f);
+    if (p.length_squared() < 1) return p;
+  }
+}
+
 #endif
