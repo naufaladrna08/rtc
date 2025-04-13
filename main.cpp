@@ -79,8 +79,78 @@ class application {
       ImGui::CreateContext();
       ImGuiIO& io = ImGui::GetIO(); (void) io;
       io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+      io.Fonts->AddFontFromFileTTF("assets/NationalPark-SemiBold.ttf", 18.0f);
 
+      ImGuiStyle &style = ImGui::GetStyle();
+      ImVec4 *colors = style.Colors;
       ImGui::StyleColorsDark();
+
+      // Primary background
+      colors[ImGuiCol_WindowBg] = ImVec4(0.07f, 0.07f, 0.09f, 1.00f);  // #131318
+      colors[ImGuiCol_MenuBarBg] = ImVec4(0.07f, 0.07f, 0.09f, 1.00f); // #131318
+
+      colors[ImGuiCol_PopupBg] = ImVec4(0.18f, 0.18f, 0.22f, 1.00f);
+
+      // Headers
+      colors[ImGuiCol_Header] = ImVec4(0.18f, 0.18f, 0.22f, 1.00f);
+      colors[ImGuiCol_HeaderHovered] = ImVec4(0.30f, 0.30f, 0.40f, 1.00f);
+      colors[ImGuiCol_HeaderActive] = ImVec4(0.25f, 0.25f, 0.35f, 1.00f);
+
+      // Buttons
+      colors[ImGuiCol_Button] = ImVec4(0.20f, 0.22f, 0.27f, 1.00f);
+      colors[ImGuiCol_ButtonHovered] = ImVec4(0.30f, 0.32f, 0.40f, 1.00f);
+      colors[ImGuiCol_ButtonActive] = ImVec4(0.35f, 0.38f, 0.50f, 1.00f);
+
+      // Frame BG
+      colors[ImGuiCol_FrameBg] = ImVec4(0.15f, 0.15f, 0.18f, 1.00f);
+      colors[ImGuiCol_FrameBgHovered] = ImVec4(0.22f, 0.22f, 0.27f, 1.00f);
+      colors[ImGuiCol_FrameBgActive] = ImVec4(0.25f, 0.25f, 0.30f, 1.00f);
+
+      // Tabs
+      colors[ImGuiCol_Tab] = ImVec4(0.18f, 0.18f, 0.22f, 1.00f);
+      colors[ImGuiCol_TabHovered] = ImVec4(0.35f, 0.35f, 0.50f, 1.00f);
+      colors[ImGuiCol_TabActive] = ImVec4(0.25f, 0.25f, 0.38f, 1.00f);
+      colors[ImGuiCol_TabUnfocused] = ImVec4(0.13f, 0.13f, 0.17f, 1.00f);
+      colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.20f, 0.20f, 0.25f, 1.00f);
+
+      // Title
+      colors[ImGuiCol_TitleBg] = ImVec4(0.12f, 0.12f, 0.15f, 1.00f);
+      colors[ImGuiCol_TitleBgActive] = ImVec4(0.15f, 0.15f, 0.20f, 1.00f);
+      colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.10f, 0.10f, 0.12f, 1.00f);
+
+      // Borders
+      colors[ImGuiCol_Border] = ImVec4(0.20f, 0.20f, 0.25f, 0.50f);
+      colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+
+      // Text
+      colors[ImGuiCol_Text] = ImVec4(0.90f, 0.90f, 0.95f, 1.00f);
+      colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.55f, 1.00f);
+
+      // Highlights
+      colors[ImGuiCol_CheckMark] = ImVec4(0.50f, 0.70f, 1.00f, 1.00f);
+      colors[ImGuiCol_SliderGrab] = ImVec4(0.50f, 0.70f, 1.00f, 1.00f);
+      colors[ImGuiCol_SliderGrabActive] = ImVec4(0.60f, 0.80f, 1.00f, 1.00f);
+      colors[ImGuiCol_ResizeGrip] = ImVec4(0.50f, 0.70f, 1.00f, 0.50f);
+      colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.60f, 0.80f, 1.00f, 0.75f);
+      colors[ImGuiCol_ResizeGripActive] = ImVec4(0.70f, 0.90f, 1.00f, 1.00f);
+
+      // Scrollbar
+      colors[ImGuiCol_ScrollbarBg] = ImVec4(0.10f, 0.10f, 0.12f, 1.00f);
+      colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.30f, 0.30f, 0.35f, 1.00f);
+      colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.40f, 0.40f, 0.50f, 1.00f);
+      colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.45f, 0.45f, 0.55f, 1.00f);
+
+      // Style tweaks
+      style.WindowRounding = 5.0f;
+      style.FrameRounding = 5.0f;
+      style.GrabRounding = 5.0f;
+      style.TabRounding = 5.0f;
+      style.PopupRounding = 5.0f;
+      style.ScrollbarRounding = 5.0f;
+      style.WindowPadding = ImVec2(10, 10);
+      style.FramePadding = ImVec2(6, 4);
+      style.ItemSpacing = ImVec2(8, 6);
+      style.PopupBorderSize = 0.f;
 
       const char* glslVersion = "#version 150";
       ImGui_ImplGlfw_InitForOpenGL(m_window, true);
@@ -115,14 +185,10 @@ class application {
 
     void run() {
       m_renderThread = std::thread([&] () {
-        m_camera->aspectRatio = m_renderAspectRatio;
-        m_camera->imageWidth = 800;
         m_camera->maxDepth = 50;
-        m_camera->vfov = 20;
         m_camera->lookFrom = point3(-2,2,1);
         m_camera->lookAt   = point3(0,0,-1);
         m_camera->vup      = vec3(0,1,0);
-
         m_renderBuffer.resize(m_textureWidth * m_textureHeight * 3);
         
         m_world->add(std::make_shared<sphere>(point3(0.0f, -100.5f, -1), 100, material_ground));
@@ -136,10 +202,20 @@ class application {
         m_world->add(std::make_shared<sphere>(point3(-R, 0.0f, -1.0f), R, material_center));
         m_world->add(std::make_shared<sphere>(point3( R, 0.0f, -1.0f), 0.5, material_center));
 
+        static int lastSize = m_textureWidth * m_textureHeight * 3;
         while (!shouldExit) {
+          m_textureHeight = static_cast<int>(m_textureWidth / m_renderAspectRatio);
+          int size = m_textureWidth * m_textureHeight * 3;
+          if (size != lastSize) {
+            m_renderBuffer.resize(size);
+          }
+
+          m_camera->aspectRatio = m_renderAspectRatio;
+          m_camera->imageWidth = m_textureWidth;
           m_camera->samplePerPixel = m_samples;
           m_camera->defocusAngle = m_defocusAngle;
           m_camera->focusDist = m_focusDist;
+          m_camera->vfov = m_vfov;
 
           if (shouldRender) {
             std::lock_guard<std::mutex> lock(renderMutex);
@@ -192,12 +268,13 @@ class application {
         ImGui::SetNextWindowViewport(viewport->ID);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
         dockspaceWindowFlags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize;
         dockspaceWindowFlags |= ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
         static bool dockspaceWindowOpen = true;
         ImGui::Begin("Main Dockspace", &dockspaceWindowOpen, dockspaceWindowFlags);
-        ImGui::PopStyleVar(2);
+        ImGui::PopStyleVar(3);
 
         // Submit the dockspace
         ImGuiIO& io = ImGui::GetIO();
@@ -221,7 +298,7 @@ class application {
 
         if (ImGui::Begin("Renderer")) {
           ImVec2 windowSize = ImGui::GetWindowSize();
-          int width = windowSize.x;
+          int width = windowSize.x - 32.0f; 
           int height = static_cast<int>(width / m_renderAspectRatio);
 
           ImGui::Text("Render Preview");
@@ -262,7 +339,9 @@ class application {
           }
 
           ImGui::Text("Render Settings");
+          ImGui::InputInt("Image Width", &m_textureWidth);
           ImGui::InputInt("Samples", &m_samples);
+          ImGui::InputInt("Vertical Field of View", &m_vfov);
           ImGui::InputDouble("Focus Distance", &m_focusDist);
           ImGui::InputDouble("Defocus Angle", &m_defocusAngle);
           
@@ -304,6 +383,7 @@ class application {
     double m_focusDist = 3.4f;
     double m_renderAspectRatio = 4.0f / 3.0f;
     std::thread m_renderThread;
+    int m_vfov = 20;
 
     typedef struct {
       std::string name;
