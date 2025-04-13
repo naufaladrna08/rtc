@@ -31,6 +31,7 @@
 #include <mutex>
 #include <atomic>
 
+std::atomic<bool> shouldExit = false;
 std::atomic<bool> shouldRender;
 std::atomic<bool> shouldUpdateTexture = false;
 std::atomic<bool> isRendering;
@@ -99,6 +100,11 @@ class application {
     }
 
     ~application() {
+      shouldExit = true;
+      if (m_renderThread.joinable()) {
+        m_renderThread.join();
+      }
+
       ImGui_ImplOpenGL3_Shutdown();
       ImGui_ImplGlfw_Shutdown();
       ImGui::DestroyContext();
@@ -108,7 +114,7 @@ class application {
     }
 
     void run() {
-      std::thread renderThread([&] () {
+      m_renderThread = std::thread([&] () {
         m_camera->aspectRatio = 4.0f / 3.0f;
         m_camera->imageWidth = 800;
         m_camera->maxDepth = 50;
@@ -130,7 +136,7 @@ class application {
         m_world->add(std::make_shared<sphere>(point3(-R, 0.0f, -1.0f), R, material_center));
         m_world->add(std::make_shared<sphere>(point3( R, 0.0f, -1.0f), 0.5, material_center));
 
-        while (true) {
+        while (!shouldExit) {
           m_camera->samplePerPixel = m_samples;
           m_camera->defocusAngle = m_defocusAngle;
           m_camera->focusDist = m_focusDist;
@@ -253,6 +259,7 @@ class application {
     int m_samples = 16;
     double m_defocusAngle = 10.0f;
     double m_focusDist = 3.4f;
+    std::thread m_renderThread;
 
     typedef struct {
       std::string name;
