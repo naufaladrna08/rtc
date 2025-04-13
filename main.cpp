@@ -115,7 +115,7 @@ class application {
 
     void run() {
       m_renderThread = std::thread([&] () {
-        m_camera->aspectRatio = 4.0f / 3.0f;
+        m_camera->aspectRatio = m_renderAspectRatio;
         m_camera->imageWidth = 800;
         m_camera->maxDepth = 50;
         m_camera->vfov = 20;
@@ -181,9 +181,51 @@ class application {
           ImGui::ShowDemoWindow(&m_showDemoWindow);
         }
 
+        /*
+         * Dockspace is always ON in this app, so I'm not using is opt_fullscreen
+         */
+        static ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags_None;
+        ImGuiWindowFlags dockspaceWindowFlags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+        const ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->WorkPos);
+        ImGui::SetNextWindowSize(viewport->WorkSize);
+        ImGui::SetNextWindowViewport(viewport->ID);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        dockspaceWindowFlags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize;
+        dockspaceWindowFlags |= ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+
+        static bool dockspaceWindowOpen = true;
+        ImGui::Begin("Main Dockspace", &dockspaceWindowOpen, dockspaceWindowFlags);
+        ImGui::PopStyleVar(2);
+
+        // Submit the dockspace
+        ImGuiIO& io = ImGui::GetIO();
+        ImGuiID dockspaceId = ImGui::GetID("MyDockspace");
+        ImGui::DockSpace(dockspaceId, ImVec2(0.0f, 0.0f), dockspaceFlags);
+
+        if (ImGui::BeginMenuBar()) {
+          if (ImGui::BeginMenu("App")) {
+            if (ImGui::MenuItem("Exit")) {
+              glfwSetWindowShouldClose(m_window, true);
+            }
+
+            ImGui::EndMenu();
+          }
+
+          ImGui::EndMenuBar();
+        }
+
+        // End dockspace window
+        ImGui::End();
+
         if (ImGui::Begin("Renderer")) {
+          ImVec2 windowSize = ImGui::GetWindowSize();
+          int width = windowSize.x;
+          int height = static_cast<int>(width / m_renderAspectRatio);
+
           ImGui::Text("Render Preview");
-          ImGui::Image((ImTextureID)(intptr_t) m_renderTexture, ImVec2(m_textureWidth, m_textureHeight));
+          ImGui::Image((ImTextureID)(intptr_t) m_renderTexture, ImVec2(width, height));
         }
         ImGui::End();
 
@@ -234,6 +276,7 @@ class application {
         };
         ImGui::End();
 
+
         ImGui::Render();
         int displayWidth, displayHeight;
         glfwGetFramebufferSize(m_window, &displayWidth, &displayHeight);
@@ -248,7 +291,7 @@ class application {
 
   private:
     GLFWwindow* m_window = nullptr;
-    bool m_showDemoWindow = true;
+    bool m_showDemoWindow = false;
     GLuint m_renderTexture = 0;
     int m_textureWidth = 800;
     int m_textureHeight = 600;
@@ -259,6 +302,7 @@ class application {
     int m_samples = 16;
     double m_defocusAngle = 10.0f;
     double m_focusDist = 3.4f;
+    double m_renderAspectRatio = 4.0f / 3.0f;
     std::thread m_renderThread;
 
     typedef struct {
