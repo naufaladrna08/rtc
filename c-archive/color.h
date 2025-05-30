@@ -1,7 +1,11 @@
 #ifndef COLOH_H
 #define COLOH_H
 #include <stdlib.h>
-#include "vec3.h"
+#ifdef OPTIMIZED_VECTOR
+  #include "vec3_simd.h"
+#else
+  #include "vec3.h"
+#endif
 
 /*
  * write_color - Write the color to a file in PPM format.

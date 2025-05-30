@@ -10,7 +10,11 @@
 #include <stdbool.h>
 #include "color.h"
 #include "ray.h"
-#include "vec3.h"
+#ifdef OPTIMIZED_VECTOR
+  #include "vec3_simd.h"
+#else
+  #include "vec3.h"
+#endif
 
 typedef vec3 color;
 typedef vec3 point3;

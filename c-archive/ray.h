@@ -1,7 +1,11 @@
 #ifndef RAY_H
 #define RAY_H
 #include <stdlib.h>
-#include "vec3.h"
+#ifdef OPTIMIZED_VECTOR
+  #include "vec3_simd.h"
+#else
+  #include "vec3.h"
+#endif
 
 typedef struct {
   vec3 origin;

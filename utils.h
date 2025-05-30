@@ -27,7 +27,11 @@ inline double drandom(double min, double max) {
   return min + (max - min) * drandom();
 }
 
-#include "vec3.h"
+#ifdef OPTIMIZED_VECTOR
+  #include "vec3_simd.h"
+#else
+  #include "vec3.h"
+#endif
 #include "color.h"
 #include "ray.h"
 #include "interval.h"

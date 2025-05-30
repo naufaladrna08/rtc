@@ -1,7 +1,11 @@
 #ifndef COLOR_H
 #define COLOR_H
 #include <iostream>
-#include "vec3.h"
+#ifdef OPTIMIZED_VECTOR
+  #include "vec3_simd.h"
+#else
+  #include "vec3.h"
+#endif
 #include "interval.h"
 
 using color = vec3;

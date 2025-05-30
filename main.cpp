@@ -7,6 +7,7 @@
  * 
  * By Naufal Adriansyah
  */ 
+#define OPTIMIZED_VECTOR
 #define GLAD_GL_IMPLEMENTATION
 #include "sphere.h"
 #include "camera.h"
